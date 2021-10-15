@@ -20,8 +20,10 @@ class App extends Component {
     const addedName = this.state.contacts
       .map(el => el.name.toLowerCase())
       .includes(contact.name.toLowerCase());
-
-    if (addedName) {
+    const addedNumber = this.state.contacts
+      .map(el => el.number)
+      .includes(contact.number);
+    if (addedName && addedNumber) {
       alert(`${contact.name} is already in contacts!`);
       return;
     }
@@ -49,17 +51,44 @@ class App extends Component {
       contacts: prevState.contacts.filter(el => el.id !== id),
     }));
   };
+  componentDidMount() {
+    const contactsLocal = localStorage.getItem('contacts');
+
+    if (contactsLocal) {
+      const parsedContacts = JSON.parse(contactsLocal);
+      if (parsedContacts.length === 0) {
+        localStorage.clear('contacts');
+        return;
+      }
+      this.setState({ contacts: parsedContacts });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.contacts !== this.state.contacts) {
+      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+    }
+  }
 
   render() {
     const { AddNewContact, addFilter, deleteContact, filteredContacts } = this;
     return (
-      <Section>
-        <h1>Phonebook</h1>
-        <Form AddNewContact={AddNewContact} />
-        <h2>Contacts</h2>
-        <Filter filter={addFilter} />
-        <Contacts contacts={filteredContacts()} deleteContact={deleteContact} />
-      </Section>
+      <>
+        <Section>
+          <h1>Phonebook</h1>
+          <Form AddNewContact={AddNewContact} />
+        </Section>
+        {this.state.contacts.length > 0 && (
+          <Section>
+            <h2>Contacts</h2>
+            <Filter filter={addFilter} />
+            <Contacts
+              contacts={filteredContacts()}
+              deleteContact={deleteContact}
+            />
+          </Section>
+        )}
+      </>
     );
   }
 }
